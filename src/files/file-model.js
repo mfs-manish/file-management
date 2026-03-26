@@ -102,8 +102,13 @@ function deleteFile(projectId, fileId, callback) {
     });
 }
 
+function getFileInfo(fileId, callback) {
+    db.query('select id, name, fileSize, filePath, type from files where id = ?', [fileId], callback);
+}
+
 module.exports = {
     getProjectFiles,
     createFiles,
-    deleteFile
+    deleteFile,
+    getFileInfo
 }

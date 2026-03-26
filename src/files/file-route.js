@@ -32,11 +32,28 @@ router.post('/', (req, res) => {
 router.delete('/:fileId', (req, res) => {
     const projectId = req.params.id;
     const fileId = req.params.fileId;
-    fileModel.deleteFile(projectId, fileId, (err, result) => {
+    fileModel.getFileInfo(fileId, (err, result) => {
+
         if (err) return res.status(500).json({ 'message': 'Error', 'data': err });
 
-        res.json(result);
-    });
+        if (result.length == 0) return res.json({ 'message': 'Error', 'data': 'File not found !!!' })
+
+        const filePath = result[0].filePath;
+
+        fileModel.deleteFile(projectId, fileId, (err, result) => {
+            if (err) return res.status(500).json({ 'message': 'Error', 'data': 'File deletion failed' });
+
+            console.log('file deleted');
+
+
+            /** delete file from disk. */
+            fs.unlink(filePath, (err) => {
+                if (err) res.json({ 'message': 'Error', 'data': 'file removed from database but could not removed form disk' });
+                res.json({ 'message': 'success', 'data': 'File deleted successfully.' });
+            })
+
+        });
+    })
 });
 
 router.post('/upload', upload.array("files", 5), (req, res) => {
