@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload file</title>
+    <style>
+        .container {
+            display: flex;
+            gap: 10px;
+            border: 2px solid rgba(8, 8, 199, .5);
+            padding: 10px;
+        }
+        
+        .project-section,
+        .file-section {
+            flex: 1;
+            padding: 5px;
+            background-color: cornsilk;
+            border: 2px solid rgba(8, 8, 199, 0.5);
+        }
+        
+        .project {
+            border: 1px solid black;
+            margin: 0px;
+            padding: 5px;
+        }
+        
+        .project:hover {
+            background-color: rgb(214, 211, 211);
+            color: white;
+        }
+        
+        .selected-project {
+            background-color: rgb(38, 38, 235);
+            color: white;
+        }
+        
+        button {
+            width: 200px;
+            padding: 7px;
+            background-color: rgb(38, 38, 235);
+            color: white;
+            border-radius: 5px;
+            border: none;
+        }
+        
+        #file-list>li>span {
+            display: none;
+        }
+        
+        #file-list>li.success>span {
+            display: inline;
+            color: rgb(17, 128, 17);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="project-section">
+            <h3 style="margin: 0px 0px 5px 0px;" for="project-label">Select a Project:</h3>
+            <div class="project-list" id="project-list">
+                <p class="project" id="1" onclick="selectProject(event, 1)">Project 1</p>
+            </div>
+        </div>
+
+        <div class="file-section">
+
+            <h3>Select multiple files:</h3>
+
+            <input type="file" id="files" multiple onchange="showFiles()">
+            <ul id="file-list"></ul>
+            <button type="button" onclick="uploadFiles()">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        //closure to store project info.
+        function projectStore() {
+            let projectId = null;
+            return {
+                setProjectId(id) {
+                    projectId = id;
+                },
+
+                getProjectId() {
+                    return projectId
+                }
+            }
+        };
+        let store = projectStore();
+
+        function showFiles() {
+            const input = document.getElementById("files");
+            const list = document.getElementById("file-list");
+            list.innerHTML = '';
+
+            for (let i = 0; i < input.files.length; i++) {
+                let li = document.createElement("li");
+                //li.textContent = input.files[i].name;
+                li.setAttribute('data-index', i);
+                li.innerHTML = `${input.files[i].name} <span class="tick">✔</span>`;
+                list.appendChild(li);
+            }
+        }
+
+        async function getProjectList() {
+            const projectsElement = document.getElementById('project-list');
+
+            try {
+                const response = await fetch('/api/projects');
+                const data = await response.json();
+
+                for (let i = 0; i < data.length; i++) {
+                    let p = document.createElement("p");
+                    p.textContent = data[i].name;
+                    p.id = data[i].id;
+                    p.className = 'project'
+                    p.addEventListener('click', (e) => selectProject(e, p.id));
+                    projectsElement.appendChild(p)
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        function selectProject(e, projectId) {
+            console.log("called", e, projectId);
+
+            const currentProjectItem = document.getElementById(projectId);
+            const projectsElement = Array.from(document.getElementsByClassName('selected-project'));
+
+            //add class name
+            currentProjectItem.classList.add('selected-project')
+
+            //remove class name from previous selection.
+            projectsElement.forEach(item => {
+                if (item.id !== projectId) {
+                    item.classList.remove('selected-project')
+                }
+            });
+
+            //call store function
+            store.setProjectId(projectId)
+        }
+
+        async function uploadFiles() {
+            const input = document.getElementById("files");
+            const id = store.getProjectId()
+
+            if (input.files.length === 0) {
+                alert("No files selected");
+                return;
+            }
+
+            if (id === null) {
+                alert("Please select a project.");
+                return;
+            }
+
+            const selectedFiles = Array.from(input.files);
+            const formData = new FormData();
+
+            selectedFiles.forEach(element => {
+                console.log(element);
+
+                formData.append('files', element)
+            });
+
+            try {
+
+                const response = await fetch("/api/projects/" + id + '/files/upload', {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+                alert(`File uploaded: ${result.success}\nFile failed to upload: ${result.failed}`);
+
+                // show tick of successfully uploaded file.
+                const data = result.data;
+                data.forEach(uploadedIndex => {
+                    const li = document.querySelector(`li[data-index="${uploadedIndex}"]`);
+                    li.classList.add('success')
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert("Upload failed");
+            }
+        }
+
+
+        getProjectList();
+    </script>
+</body>
+
+</html>

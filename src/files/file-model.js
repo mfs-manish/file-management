@@ -11,35 +11,51 @@ const db = require('../config/db');
  * @param {*} callback 
  */
 function getProjectFiles(projectId, callback) {
-    db.query('select id, name, fileSize from files where project_id = ?', [projectId], callback);
+    db.query('select id, name, fileSize, filePath, type from files where project_id = ?', [projectId], callback);
 }
 
 /**
  * 
  * @param {*} projectId 
- * @param {*} fileInfo array of JSON {name:string, fileSize:int, type: string, filePath:string}
+ * @param {JSON} fileInfo array of JSON {name:string, fileSize:int, type: string, filePath:string}
  * @param {*} callback 
  */
 function createFiles(projectId, fileInfo, callback) {
     let uploaded = [];
+    const { name, fileSize, type, filePath } = fileInfo;
+    const sql = 'insert into files(name, fileSize, type, filePath, project_id) values(?,?,?,?,?)';
 
-    for (let index = 0; index < fileInfo.length; index++) {
-        const element = fileInfo[index];
-        const { name, fileSize, type, filePath } = element;
-        const sql = 'insert into files(name, fileSize, type, filePath, project_id) values(?,?,?,?,?)';
-        db.query(sql, [name, fileSize, type, filePath, projectId], (err, result) => {
-            if (result) uploaded.push({ 'fileId': result.insertId, 'name': name, 'fileSize': fileSize, 'type': type });
+    db.getConnection((err, connection) => {
+        if (err) return callback({ 'message': 'Error', 'error': err });
 
-            if (index === fileInfo.length - 1) {
-                let response = {
-                    'projectId': projectId,
-                    'files': uploaded,
-                    'message': uploaded.length ? 'Success' : 'Error'
-                }
-                return callback(null, response)
+        connection.query(sql, [name, fileSize, type, filePath, projectId], (err, result) => {
+            if (err) {
+                return callback({ 'message': 'Error', 'error': err })
             }
+
+            connection.query('update projects set fileCount = fileCount+1 where id=?', projectId, (err, result) => {
+                if (err) {
+                    return connection.rollback(() => {
+                        connection.release();
+                        callback(err);
+                    });
+                }
+
+                connection.commit(err => {
+                    if (err) {
+                        return connection.rollback(() => {
+                            connection.release();
+                            callback(err);
+                        });
+                    };
+                })
+
+                connection.release();
+
+                callback(null, { 'message': 'success', 'data': 'File uploaded successfully' })
+            })
         })
-    }
+    });
 }
 
 function deleteFile(projectId, fileId, callback) {

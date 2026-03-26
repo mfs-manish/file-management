@@ -1,3 +1,5 @@
+require('dotenv').config({ path: '../.env' }); // load env variables
+
 const express = require('express')
 const path = require('path')
 const app = express()
@@ -10,8 +12,7 @@ const fileRoute = require('./files/file-route');
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    // res.sendFile(path.join(__dirname, 'public/index.html'))
-    res.send('Hello World');
+    res.sendFile(path.join(__dirname, 'files/upload.html'))
 });
 
 app.use('/api/projects', projectRoute);

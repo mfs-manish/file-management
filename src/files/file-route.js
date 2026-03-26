@@ -3,8 +3,10 @@
  */
 
 const express = require('express');
+const fs = require('fs')
 const router = express.Router({ mergeParams: true });
 const fileModel = require('./file-model');
+const upload = require('../middleware/multer')
 
 router.get('/', (req, res) => {
     const projectId = req.params.id;
@@ -35,6 +37,47 @@ router.delete('/:fileId', (req, res) => {
 
         res.json(result);
     });
+});
+
+router.post('/upload', upload.array("files", 5), (req, res) => {
+    const filesReceived = req.files;
+    const projectId = req.params.id;
+
+    let completed = 0;
+    const filesuploaded = [];
+
+    filesReceived.forEach((f, i) => {
+        const fileInfo = {
+                'name': f.originalname,
+                'filePath': f.path,
+                'type': f.mimetype,
+                'fileSize': f.size,
+            }
+            //send info to save into database
+        fileModel.createFiles(projectId, fileInfo, (err, result) => {
+            if (err) {
+                /** delete uploaded file. */
+                fs.unlink(f.path, (e, s) => {
+                    if (e) console.log(e);
+                    if (s) console.log(s);
+                })
+            }
+
+            if (result) {
+                filesuploaded.push(i) // return index of uploaded file.
+            }
+            completed++
+            if (completed == filesReceived.length) {
+                res.json({
+                    success: filesuploaded.length,
+                    failed: filesReceived.length - filesuploaded.length,
+                    data: filesuploaded
+                })
+            }
+        });
+
+    });
+
 });
 
 module.exports = router;
