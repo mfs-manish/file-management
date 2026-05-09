@@ -61,9 +61,7 @@
     <div class="container">
         <div class="project-section">
             <h3 style="margin: 0px 0px 5px 0px;" for="project-label">Select a Project:</h3>
-            <div class="project-list" id="project-list">
-                <p class="project" id="1" onclick="selectProject(event, 1)">Project 1</p>
-            </div>
+            <div class="project-list" id="project-list"></div>
         </div>
 
         <div class="file-section">
@@ -92,6 +90,7 @@
         };
         let store = projectStore();
 
+        // Display selected files.
         function showFiles() {
             const input = document.getElementById("files");
             const list = document.getElementById("file-list");

@@ -1,24 +1,25 @@
 {
-  "name": "file-management",
-  "version": "1.0.0",
-  "description": "App use to store file and it metadata",
-  "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "yes"
-  },
-  "author": "manish kumar",
-  "license": "ISC",
-  "dependencies": {
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
-    "mysql2": "^3.17.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+    "name": "file-management",
+    "version": "1.0.0",
+    "description": "App use to store file and it metadata",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "nodemon src/app.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "yes"
+    },
+    "author": "manish kumar",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^17.3.1",
+        "express": "^5.2.1",
+        "multer": "^2.1.1",
+        "mysql2": "^3.17.3"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.14"
+    }
 }
